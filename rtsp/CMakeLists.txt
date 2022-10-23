@@ -157,5 +157,6 @@ foreach(_target signaling_rtsp)
   target_link_libraries(${_target}
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
-    ${_PROTOBUF_LIBPROTOBUF})
+    ${_PROTOBUF_LIBPROTOBUF}
+    nlohmann_json::nlohmann_json)
 endforeach()
