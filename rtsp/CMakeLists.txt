@@ -147,12 +147,11 @@ add_custom_command(
 
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+include_directories("./header")
 
 # Targets greeter_[async_](client|server)
-foreach(_target
-  greeter_client greeter_server
-  greeter_async_client greeter_async_client2 greeter_async_server)
-  add_executable(${_target} "${_target}.cc"
+foreach(_target signaling_rtsp)
+  add_library(${_target} STATIC "src/${_target}.cpp"
     ${hw_proto_srcs}
     ${hw_grpc_srcs})
   target_link_libraries(${_target}

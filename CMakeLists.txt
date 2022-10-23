@@ -12,4 +12,4 @@ find_package(Protobuf CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
 add_subdirectory(protos)
-add_subdirectory(src)
+add_subdirectory(rtsp)
