@@ -145,11 +145,6 @@ new_signaling_client(std::string token,
 }
 
 
-void 
-WaitForStart       (SignalingClient* client)
-{
-
-}
 
 void 
 SendNvComputer     (SignalingClient* client, 

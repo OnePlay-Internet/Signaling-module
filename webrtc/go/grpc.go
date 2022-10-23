@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"github.com/OnePlay-Internet/signaling-module/go/packet"
+	"github.com/OnePlay-Internet/signaling-module/webrtc/go/packet"
 
 	"github.com/OnePlay-Internet/webrtc-proxy/signalling"
 	"github.com/OnePlay-Internet/webrtc-proxy/util/config"
