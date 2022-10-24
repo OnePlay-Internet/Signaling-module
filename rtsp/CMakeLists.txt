@@ -18,7 +18,7 @@
 # that automatically builds all the dependencies before building protobuf.
 
 cmake_minimum_required(VERSION 3.5.1)
-set (VCPKG_HOME "/usr/vcpkg") #IMPORTANT: change this to where your vcpkg exists.
+set (VCPKG_HOME "/vcpkg") #IMPORTANT: change this to where your vcpkg exists.
 set (CMAKE_TOOLCHAIN_FILE "${VCPKG_HOME}/scripts/buildsystems/vcpkg.cmake")
 set (CMAKE_CXX_STANDARD 17)
 project(HelloWorldMinimal)
