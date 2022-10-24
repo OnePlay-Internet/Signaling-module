@@ -103,6 +103,9 @@ int main(int argc, char** argv) {
         std::this_thread::sleep_for(100ms);
         if (result.failed) {
             printf("test failed");
+            return 0;
         }
     }
+    printf("test success");
+    return 0;
 }
