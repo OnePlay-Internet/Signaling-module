@@ -86,10 +86,10 @@ int main(int argc, char** argv) {
         nullptr
     };
     result.client = new_signaling_client(client_config,
-        server_on_server_infor,
-        server_on_selection,
-        server_on_response,
-        server_on_start,
+        client_on_server_infor,
+        client_on_selection,
+        client_on_response,
+        client_on_start,
         (void*)&result);  
 
     result.server = new_signaling_client(server_config,
