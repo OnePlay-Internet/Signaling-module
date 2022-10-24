@@ -83,13 +83,24 @@ typedef struct _SignalingClient SignalingClient;
 typedef void (*OnNvComputer) (NvComputer* a, void* data); 
 typedef void (*OnNvSelection) (NvSelection* a, void* data); 
 typedef void (*OnNvResponse) (NvResponse* a, void* data); 
+typedef void (*OnStart) (void* data); 
 
 void WaitForStart       (SignalingClient* client); 
 void SendNvComputer     (SignalingClient* client, NvComputer* a); 
 void SendNvSelection    (SignalingClient* client, NvSelection* a); 
 void SendNvResponse     (SignalingClient* client, NvSelection* a); 
 
-SignalingClient*        new_signaling_client    (
+
+
+typedef struct _GrpcConfig {
+    std::string token;
+    std::string signaling_ip;
+    int grpc_port;
+}GrpcConfig;
+
+SignalingClient*   new_signaling_client         (GrpcConfig config,
                                                  OnNvComputer computer,
                                                  OnNvSelection selection,
-                                                 OnNvResponse response);
+                                                 OnNvResponse response,
+                                                 OnStart start,
+                                                 void *data);
