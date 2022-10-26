@@ -80,7 +80,7 @@ struct _SignalingClient {
 
 
 SignalingClient*        
-new_signaling_client(std::string token,
+new_signaling_client(GrpcConfig config,
                     OnNvComputer computer,
                     OnNvSelection selection,
                     OnNvResponse response,
@@ -92,10 +92,13 @@ new_signaling_client(std::string token,
   impl->on_select  = selection;
   impl->on_response  = response;
   impl->data = data;
-  impl->grpc_client = new GRPCClient(grpc::CreateChannel("dsf", grpc::InsecureChannelCredentials()));
+
+  char c_str[50] = {0};
+  snprintf(c_str,50,"%s:%d",config.signaling_ip,config.grpc_port);
+  impl->grpc_client = new GRPCClient(grpc::CreateChannel(c_str, grpc::InsecureChannelCredentials()));
 
   ClientContext context;
-  context.AddMetadata("authorization",token);
+  context.AddMetadata("authorization",config.token);
   auto stream = impl->grpc_client->StreamRequest(context);
   if(stream == nullptr) {
     free(impl);

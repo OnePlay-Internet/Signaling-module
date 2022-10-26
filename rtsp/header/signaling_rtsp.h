@@ -89,7 +89,17 @@ void SendNvComputer     (SignalingClient* client, ComputerInfo* a);
 void SendLaunchRequest    (SignalingClient* client, LaunchRequest* a); 
 void SendLaunchResponse     (SignalingClient* client, LaunchRequest* a); 
 
-SignalingClient*        new_signaling_client    (
+
+
+typedef struct _GrpcConfig {
+    std::string token;
+    std::string signaling_ip;
+    int grpc_port;
+}GrpcConfig;
+
+SignalingClient*   new_signaling_client         (GrpcConfig config,
                                                  OnNvComputer computer,
                                                  OnNvSelection selection,
-                                                 OnNvResponse response);
+                                                 OnNvResponse response,
+                                                 OnStart start,
+                                                 void *data);
