@@ -64,9 +64,9 @@ class GRPCClient {
 };
 
 struct _SignalingClient {
-  OnNvComputer  on_comp;
-  OnNvSelection  on_select;
-  OnNvResponse  on_response;
+  OnServerInfo  on_comp;
+  OnLaunchRequest  on_select;
+  OnLaunchResponse  on_response;
   void* data;
 
   int request_count;
@@ -81,9 +81,9 @@ struct _SignalingClient {
 
 SignalingClient*        
 new_signaling_client(GrpcConfig config,
-                    OnNvComputer computer,
-                    OnNvSelection selection,
-                    OnNvResponse response,
+                    OnServerInfo computer,
+                    OnLaunchRequest selection,
+                    OnLaunchResponse response,
                     void* data)
 {
   SignalingClient* impl = (SignalingClient*)malloc(sizeof(SignalingClient));
@@ -123,7 +123,7 @@ new_signaling_client(GrpcConfig config,
       if (target == "START") {
         impl->start_received = true;
       } else if (target == "SERVERINFO") {
-        ComputerInfo computer;
+        ServerInfor computer;
 
         impl->on_comp(&computer,impl->data);
       } else if (target == "RESPONSE") {
@@ -150,8 +150,8 @@ new_signaling_client(GrpcConfig config,
 
 
 void 
-SendNvComputer     (SignalingClient* client, 
-                    ComputerInfo* a)
+SendServerInfor (SignalingClient* client, 
+                    ServerInfor* a)
 {
   UserRequest req;
   req.mutable_data()->emplace("app","asdf");
@@ -166,8 +166,8 @@ SendLaunchRequest    (SignalingClient* client,
 
 }
 void 
-SendNvResponse     (SignalingClient* client, 
-                    LaunchRequest* a)
+SendLaunchResponse     (SignalingClient* client, 
+                    LaunchResponse* a)
 {
 
 }

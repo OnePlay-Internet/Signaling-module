@@ -39,7 +39,7 @@ typedef struct _App {
 }App;
 
 
-typedef struct _NvComputer{
+typedef struct _ServerInfor{
     std::string gfeVersion; // xml:root.GfeVersion
     std::string appVersion; // xml:root.appversion
     std::string gpuModel; // xml:root.gputype
@@ -63,16 +63,16 @@ typedef struct _NvComputer{
 
     DisplayMode displayModes[5]; // xml:root.SupportedDisplayMode
     App appList[5]; // polling /applist from server 
-}ComputerInfo;
+}ServerInfor;
 
-typedef struct _NvSelection{
+typedef struct _LaunchRequest{
     std::string rikey;
     std::string rikeyid;
     std::string appid;
     bool localAudioPlayMode;
 }LaunchRequest;
 
-typedef struct _NvResponse{
+typedef struct _LaunchResponse{
     std::string sessionUrl;
     std::string gamesession;
 }LaunchResponse;
@@ -80,14 +80,17 @@ typedef struct _NvResponse{
 
 typedef struct _SignalingClient SignalingClient;
 
-typedef void (*OnNvComputer) (ComputerInfo* a, void* data); 
-typedef void (*OnNvSelection) (LaunchRequest* a, void* data); 
-typedef void (*OnNvResponse) (LaunchResponse* a, void* data); 
+typedef void (*OnStart) (void* data); 
+typedef void (*OnServerInfo) (ServerInfor* a, void* data); 
+typedef void (*OnLaunchRequest) (LaunchRequest* a, void* data); 
+typedef void (*OnLaunchResponse) (LaunchResponse* a, void* data); 
 
-void WaitForStart       (SignalingClient* client); 
-void SendNvComputer     (SignalingClient* client, ComputerInfo* a); 
-void SendLaunchRequest    (SignalingClient* client, LaunchRequest* a); 
-void SendLaunchResponse     (SignalingClient* client, LaunchRequest* a); 
+void WaitForStart           (SignalingClient* client); 
+void SendServerInfor        (SignalingClient* client, ServerInfor* a); 
+void SendLaunchRequest      (SignalingClient* client, LaunchRequest* a); 
+void SendLaunchResponse     (SignalingClient* client, LaunchResponse* a); 
+void WaitForConnected       (SignalingClient* client);
+void CloseSignaling         (SignalingClient* client);
 
 
 
@@ -98,8 +101,8 @@ typedef struct _GrpcConfig {
 }GrpcConfig;
 
 SignalingClient*   new_signaling_client         (GrpcConfig config,
-                                                 OnNvComputer computer,
-                                                 OnNvSelection selection,
-                                                 OnNvResponse response,
+                                                 OnServerInfo computer,
+                                                 OnLaunchRequest selection,
+                                                 OnLaunchResponse response,
                                                  OnStart start,
                                                  void *data);
