@@ -63,31 +63,31 @@ typedef struct _NvComputer{
 
     DisplayMode displayModes[5]; // xml:root.SupportedDisplayMode
     App appList[5]; // polling /applist from server 
-}NvComputer;
+}ComputerInfo;
 
 typedef struct _NvSelection{
     std::string rikey;
     std::string rikeyid;
     std::string appid;
     bool localAudioPlayMode;
-}NvSelection;
+}LaunchRequest;
 
 typedef struct _NvResponse{
     std::string sessionUrl;
     std::string gamesession;
-}NvResponse;
+}LaunchResponse;
 
 
 typedef struct _SignalingClient SignalingClient;
 
-typedef void (*OnNvComputer) (NvComputer* a, void* data); 
-typedef void (*OnNvSelection) (NvSelection* a, void* data); 
-typedef void (*OnNvResponse) (NvResponse* a, void* data); 
+typedef void (*OnNvComputer) (ComputerInfo* a, void* data); 
+typedef void (*OnNvSelection) (LaunchRequest* a, void* data); 
+typedef void (*OnNvResponse) (LaunchResponse* a, void* data); 
 
 void WaitForStart       (SignalingClient* client); 
-void SendNvComputer     (SignalingClient* client, NvComputer* a); 
-void SendNvSelection    (SignalingClient* client, NvSelection* a); 
-void SendNvResponse     (SignalingClient* client, NvSelection* a); 
+void SendNvComputer     (SignalingClient* client, ComputerInfo* a); 
+void SendLaunchRequest    (SignalingClient* client, LaunchRequest* a); 
+void SendLaunchResponse     (SignalingClient* client, LaunchRequest* a); 
 
 SignalingClient*        new_signaling_client    (
                                                  OnNvComputer computer,

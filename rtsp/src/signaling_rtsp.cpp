@@ -120,16 +120,16 @@ new_signaling_client(std::string token,
       if (target == "START") {
         impl->start_received = true;
       } else if (target == "SERVERINFO") {
-        NvComputer computer;
+        ComputerInfo computer;
 
         impl->on_comp(&computer,impl->data);
       } else if (target == "RESPONSE") {
-        NvResponse response;
+        LaunchResponse response;
         response.gamesession = res.data().at("gamesession");
         response.sessionUrl  = res.data().at("sessionUrl");
         impl->on_response(&response,impl->data);
       } else if (target == "SELECTION") {
-        NvSelection select;
+        LaunchRequest select;
         select.rikey   = res.data().at("rikey");
         select.rikeyid = res.data().at("rikeyid");
         select.appid   = res.data().at("appid");
@@ -148,7 +148,7 @@ new_signaling_client(std::string token,
 
 void 
 SendNvComputer     (SignalingClient* client, 
-                    NvComputer* a)
+                    ComputerInfo* a)
 {
   UserRequest req;
   req.mutable_data()->emplace("app","asdf");
@@ -157,14 +157,14 @@ SendNvComputer     (SignalingClient* client,
 
 }
 void 
-SendNvSelection    (SignalingClient* client, 
-                    NvSelection* a)
+SendLaunchRequest    (SignalingClient* client, 
+                    LaunchRequest* a)
 {
 
 }
 void 
 SendNvResponse     (SignalingClient* client, 
-                    NvSelection* a)
+                    LaunchRequest* a)
 {
 
 }
