@@ -41,7 +41,7 @@ using signalingGRPC::UserResponse;
 
 // Handshake commands
 static constexpr auto CMD_START = "START";
-static constexpr auto CMD_SERVERINFOR = "SERVERINFO";
+static constexpr auto CMD_SERVERINFOR = "SERVERINFOR";
 static constexpr auto CMD_LAUNCH_REQUEST = "SELECTION";
 static constexpr auto CMD_LAUNCH_RESPONSE = "RESPONSE";
 
@@ -74,10 +74,11 @@ private:
 // Streaming Server [Signaling Client] <===> Signaling Server <===> Streaming
 // Client [Signaling Client]
 struct _SignalingClient {
-  OnServerInfo on_computer;
+  OnServerInfo on_serverinfor;
   OnLaunchRequest on_select;
   OnLaunchResponse on_response;
   OnStart on_start;
+  OnError on_error;
   void *data;
 
   // Stream Server
@@ -91,6 +92,7 @@ struct _SignalingClient {
   bool selection_sent;
   bool response_received;
 
+  std::string error_msg;
   int request_count;
   bool connected;
   bool stream_server;
@@ -99,19 +101,21 @@ struct _SignalingClient {
 };
 
 SignalingClient *new_signaling_client(GrpcConfig config,
-                                      OnServerInfo on_computer_cb,
+                                      OnServerInfo on_serverinfor_cb,
                                       OnLaunchRequest on_selection_cb,
                                       OnLaunchResponse on_response_cb,
                                       OnStart on_start_cb,
+                                      OnError on_error_cb,
                                       void *data) {
   SignalingClient *sc = (SignalingClient *)malloc(sizeof(SignalingClient));
   memset(sc, 0, sizeof(SignalingClient));
 
   // Register callback functions
-  sc->on_computer = on_computer_cb;
+  sc->on_serverinfor = on_serverinfor_cb;
   sc->on_select = on_selection_cb;
   sc->on_response = on_response_cb;
   sc->on_start = on_start_cb;
+  sc->on_error = on_error_cb;
   sc->data = data;
 
   // Init
@@ -122,6 +126,7 @@ SignalingClient *new_signaling_client(GrpcConfig config,
   sc->selection_received = false;
   sc->response_sent = false;
   sc->response_received = false;
+  sc->error_msg = "";
   sc->request_count = 0;
   sc->connected = false;
   sc->stream_server = config.stream_server;
@@ -155,12 +160,18 @@ SignalingClient *new_signaling_client(GrpcConfig config,
 
       // Handle error
       if (!has_output) {
+        std::this_thread::sleep_for(10ms);
+        continue;
       } else if (res.error().length() != 0) {
+        break;
       }
 
       // Handle response
       auto err = handle_response(sc, res);
     }
+
+    // Report error and return
+    sc->on_error(sc->error_msg, sc->data);
   });
 
   return sc;
@@ -180,6 +191,7 @@ static bool handle_response(SignalingClient *sc, UserResponse &r) {
     err = RecvLaunchRequest(sc, r);
   } else {
     err = true;
+    sc->error_msg = "Unknown Target command. Received: " + target;
   }
 
   return err;
@@ -202,6 +214,7 @@ void CloseSignaling(SignalingClient *sc) {
 // from signaling server to stream server
 static bool RecvStart(SignalingClient *sc) {
   if(sc == nullptr || !sc->stream_server) {
+    sc->error_msg = "RecvStart: invalid state";
     return false;
   }
 
@@ -214,6 +227,7 @@ static bool RecvStart(SignalingClient *sc) {
 // from stream server to stream client
 bool SendServerInfor(SignalingClient *sc, ServerInfor *a) {
   if (sc == nullptr || !sc->stream_server || !sc->start_received) {
+    sc->error_msg = "SendServerInfor: invalid state";
     return false;
   }
 
@@ -223,6 +237,7 @@ bool SendServerInfor(SignalingClient *sc, ServerInfor *a) {
   r.set_target(CMD_SERVERINFOR);
   if (const auto &[_, err] = r.mutable_data()->emplace("serverinfor", j.dump());
       err) {
+    sc->error_msg = "SendServerInfor: invalid data";
     return sc->serverinfo_sent = false;
   }
 
@@ -233,18 +248,20 @@ bool SendServerInfor(SignalingClient *sc, ServerInfor *a) {
 // stream client recv from stream server
 static bool RecvServerInfor(SignalingClient *sc, UserResponse &r) {
   if (sc == nullptr || sc->stream_server) {
+    sc->error_msg = "RecvServerInfor: invalid state";
     return false;
   }
 
   // do not allow exceptions
   auto j = json::parse(r.data().at("serverinfor"), nullptr, false);
   if (j.is_discarded()) {
+    sc->error_msg = "RecvServerInfor: invalid data";
     return sc->serverinfo_received = false;
   }
   auto nc = j.get<ServerInfor>();
 
   sc->serverinfo_received = true;
-  sc->on_computer(&nc, sc->data);
+  sc->on_serverinfor(&nc, sc->data);
 
   return sc->serverinfo_received;
 }
@@ -252,6 +269,7 @@ static bool RecvServerInfor(SignalingClient *sc, UserResponse &r) {
 // from stream client to stream server
 bool SendLaunchRequest(SignalingClient *sc, LaunchRequest *a) {
   if (sc == nullptr || sc->stream_server || !sc->serverinfo_received) {
+    sc->error_msg = "SendLaunchRequest: invalid state";
     return false;
   }
 
@@ -261,6 +279,7 @@ bool SendLaunchRequest(SignalingClient *sc, LaunchRequest *a) {
   r.set_target(CMD_LAUNCH_REQUEST);
   if (const auto &[_, err] = r.mutable_data()->emplace("launchrequest", j.dump());
       err) {
+    sc->error_msg = "SendLaunchRequest: invalid data";
     return sc->selection_sent = false;
   }
 
@@ -271,12 +290,14 @@ bool SendLaunchRequest(SignalingClient *sc, LaunchRequest *a) {
 static bool RecvLaunchRequest(SignalingClient *sc, UserResponse &r) {
   if (sc == nullptr || !sc->stream_server || !sc->start_received ||
       !sc->serverinfo_sent) {
+    sc->error_msg = "RecvLaunchRequest: invalid state";
     return false;
   }
 
   // do not allow exceptions
   auto j = json::parse(r.data().at("launchrequest"), nullptr, false);
   if (j.is_discarded()) {
+    sc->error_msg = "RecvLaunchRequest: invalid data";
     return sc->selection_received = false;
   }
   auto ns = j.get<LaunchRequest>();
@@ -291,6 +312,7 @@ static bool RecvLaunchRequest(SignalingClient *sc, UserResponse &r) {
 bool SendLaunchResponse(SignalingClient *sc, LaunchResponse *a) {
   if (sc == nullptr || !sc->stream_server || !sc->start_received ||
       !sc->serverinfo_sent || !sc->selection_received) {
+    sc->error_msg = "SendLaunchResponse: invalid state";
     return false;
   }
 
@@ -300,6 +322,7 @@ bool SendLaunchResponse(SignalingClient *sc, LaunchResponse *a) {
   r.set_target(CMD_LAUNCH_RESPONSE);
   if (const auto &[_, err] = r.mutable_data()->emplace("launchresponse", j.dump());
       err) {
+    sc->error_msg = "SendLaunchResponse: invalid data";
     return sc->response_sent = false;
   }
 
@@ -310,18 +333,23 @@ bool SendLaunchResponse(SignalingClient *sc, LaunchResponse *a) {
 static bool RecvLaunchResponse(SignalingClient *sc, UserResponse &r) {
   if (sc == nullptr || sc->stream_server || !sc->serverinfo_received ||
       !sc->selection_sent) {
+    sc->error_msg = "RecvLaunchResponse: invalid state";
     return false;
   }
 
   // do not allow exceptions
   auto j = json::parse(r.data().at("launchresponse"), nullptr, false);
   if (j.is_discarded()) {
+    sc->error_msg = "RecvLaunchResponse: invalid data";
     return sc->response_received = false;
   }
   auto nr = j.get<LaunchResponse>();
 
   sc->response_received = true;
   sc->on_response(&nr, sc->data);
+
+  // TODO: Establish and verify RTSP connection first
+  sc->connected = true;
 
   return sc->selection_received;
 }

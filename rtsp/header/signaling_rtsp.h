@@ -81,6 +81,7 @@ typedef void (*OnStart)(void *data);
 typedef void (*OnServerInfo)(ServerInfor *a, void *data);
 typedef void (*OnLaunchRequest)(LaunchRequest *a, void *data);
 typedef void (*OnLaunchResponse)(LaunchResponse *a, void *data);
+typedef void (*OnError)(const std::string &error, void *data);
 
 void WaitForStart(SignalingClient *sc);
 bool SendServerInfor(SignalingClient *sc, ServerInfor *a);
@@ -101,4 +102,5 @@ SignalingClient *new_signaling_client(GrpcConfig config,
                                       OnLaunchRequest selection,
                                       OnLaunchResponse response,
                                       OnStart start,
+                                      OnError error,
                                       void *data);
