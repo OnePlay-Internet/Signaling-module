@@ -131,7 +131,7 @@ new_signaling_client(GrpcConfig config,
         response.gamesession = res.data().at("gamesession");
         response.sessionUrl  = res.data().at("sessionUrl");
         impl->on_response(&response,impl->data);
-      } else if (target == "SELECTION") {
+      } else if (target == "REQUEST") {
         LaunchRequest select;
         select.rikey   = res.data().at("rikey");
         select.rikeyid = res.data().at("rikeyid");
