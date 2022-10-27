@@ -147,7 +147,10 @@ add_custom_command(
 
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-include_directories("./header")
+include_directories(
+  "./header"
+  "./src"
+)
 
 # Targets greeter_[async_](client|server)
 foreach(_target signaling_rtsp)
@@ -164,6 +167,6 @@ endforeach()
 add_executable(signaling_rtsp_test 
   "test/signaling_rtsp_test.cpp"
   "src/signaling_rtsp.cpp"
-  "src/rtsp_json.cpp"
+  "src/rtsp_packet.cpp"
 )
 target_link_libraries(signaling_rtsp_test signaling_rtsp)

@@ -1,11 +1,18 @@
 #include <cstring>
 
-#include "rtsp_json.h"
+#include "rtsp_packet.h"
 
+
+
+
+void
+to_c_string(std::string str, char* buffer)
+{
+	memcpy(buffer,str.c_str(),str.size());
+}
 
 
 void serverinfor_to_map(DataField *j, const ServerInfor *n) {
-
 	(*j)["display[0].width"] = std::to_string(n->displayModes[0].width);
 	(*j)["display[0].refreshRate"] = std::to_string(n->displayModes[0].refreshRate);
 	(*j)["display[0].height"] = std::to_string(n->displayModes[0].height);
@@ -21,6 +28,7 @@ void serverinfor_to_map(DataField *j, const ServerInfor *n) {
     (*j)["appVersion"] =  n->appVersion;
     (*j)["gpuModel"] =  n->gpuModel;
     (*j)["macAddress"] = n->macAddress;
+    (*j)["name"] = n->name;
 
     (*j)["localAddress.Address"] = n->localAddress.m_Address;
     (*j)["remoteAddress.Address"] = n->remoteAddress.m_Address;
@@ -41,16 +49,17 @@ void serverinfor_to_map(DataField *j, const ServerInfor *n) {
 }
 
 void serverinfor_from_map(const DataField *j, ServerInfor *n) {
-	std::memset(n, 0, sizeof(ServerInfor));
-	n->gfeVersion = j->at("gfeVersion");
-	n->appVersion = j->at("appVersion");
-	n->gpuModel = j->at("gpuModel");
-	n->macAddress = j->at("macAddress");
+	memset(n,0,sizeof(ServerInfor));
+	to_c_string(j->at("gfeVersion"),n->gfeVersion);
+	to_c_string(j->at("appVersion"),n->appVersion);
+	to_c_string(j->at("gpuModel"),n->gpuModel);
+	to_c_string(j->at("macAddress"),n->macAddress);
+	to_c_string(j->at("name"),n->name);
 
-	n->localAddress.m_Address = j->at("localAddress.Address");
-	n->remoteAddress.m_Address = j->at("remoteAddress.Address");
-	n->ipv6Address.m_Address = j->at("ipv6Address.Address");
-	n->manualAddress.m_Address = j->at("manualAddress.Address");
+	to_c_string(j->at("localAddress.Address"),n->localAddress.m_Address);
+	to_c_string(j->at("remoteAddress.Address"),n->remoteAddress.m_Address);
+	to_c_string(j->at("ipv6Address.Address"),n->ipv6Address.m_Address);
+	to_c_string(j->at("manualAddress.Address"),n->manualAddress.m_Address);
 
 	n->localAddress.m_Port = atoi(j->at("localAddress.Port").c_str());
 	n->remoteAddress.m_Port = atoi(j->at("remoteAddress.Port").c_str());
@@ -61,7 +70,7 @@ void serverinfor_from_map(const DataField *j, ServerInfor *n) {
 	n->serverCodecModeSupport = atoi(j->at("serverCodecModeSupport").c_str());
 	n->isSupportedServerVersion = atoi(j->at("isSupportedServerVersion").c_str());
 	n->hasCustomName = atoi(j->at("hasCustomName").c_str());
-	n->uuid = j->at("uuid");
+	to_c_string(j->at("uuid"),n->uuid);
 
     n->displayModes[0].active = true;
     n->displayModes[0].width = 			atoi(j->at("display[0].width").c_str());
@@ -70,8 +79,8 @@ void serverinfor_from_map(const DataField *j, ServerInfor *n) {
 
 
 	n->appList[0].active = true;
+	to_c_string(j->at("app[0].name"),n->appList[0].name);
 	n->appList[0].id = 					atoi(j->at("app[0].id").c_str());
-	n->appList[0].name = 				atoi(j->at("app[0].name").c_str());
 	n->appList[0].hdrSupported = 		atoi(j->at("app[0].hdrSupported").c_str());
 	n->appList[0].isAppCollectorGame = 	atoi(j->at("app[0].isAppCollectorGame").c_str());
 	n->appList[0].hidden = 				atoi(j->at("app[0].hidden").c_str());
@@ -82,13 +91,13 @@ void launchrequest_to_map(DataField *j, const LaunchRequest *n) {
     (*j)["rikey"] = n->rikey;
     (*j)["rikeyid"] = n->rikeyid;
     (*j)["appid"] = n->appid;
-    (*j)["localAudioPlayMode"] = n->localAudioPlayMode;
+    (*j)["localAudioPlayMode"] = std::to_string(n->localAudioPlayMode);
 }
 
 void launchrequest_from_map(const DataField *j, LaunchRequest *n) {
-	n->rikey = j->at("rikey");
-	n->rikeyid = j->at("rikeyid");
-	n->appid = j->at("appid");
+	to_c_string( j->at("rikey"),n->rikey );
+	to_c_string( j->at("rikeyid"),n->rikeyid );
+	to_c_string( j->at("appid"),n->appid );
 	n->localAudioPlayMode = atoi(j->at("localAudioPlayMode").c_str());
 }
 
@@ -98,6 +107,57 @@ void launchresponse_to_map(DataField *j, const LaunchResponse *n) {
 }
 
 void launchresponse_from_map(const DataField *j, LaunchResponse *n) {
-	n->sessionUrl = j->at("sessionUrl");
-	n->gamesession = j->at("gamesession");
+	to_c_string(j->at("sessionUrl"),n->sessionUrl);
+	to_c_string(j->at("gamesession"),n->gamesession);
+}
+
+
+
+
+
+
+
+
+
+
+bool 
+compare_server_infor	(ServerInfor* a, 
+						ServerInfor* b)
+{
+	int size = sizeof(ServerInfor);
+	for(int i = 0;i<size-1;i++)
+	{
+		if (*(((char*)a)+i) != *(((char*)b)+i)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool 
+compare_launch_request (LaunchRequest* a, 
+						LaunchRequest* b)
+{
+	int size = sizeof(LaunchRequest);
+	for(int i = 0;i<size-1;i++)
+	{
+		if (*(((char*)a)+i) != *(((char*)b)+i)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool 
+compare_launch_response (LaunchResponse* a, 
+						LaunchResponse* b)
+{
+	int size = sizeof(LaunchResponse);
+	for(int i = 0;i<size-1;i++)
+	{
+		if (*(((char*)a)+i) != *(((char*)b)+i)) {
+			return false;
+		}
+	}
+	return true;
 }

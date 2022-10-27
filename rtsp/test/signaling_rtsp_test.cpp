@@ -4,7 +4,7 @@
 #include <string>
 #include <thread>
 
-#include "rtsp_json.h"
+#include "rtsp_packet.h"
 #include "signaling_rtsp.h"
 
 using namespace std::literals;
@@ -26,32 +26,19 @@ ServerInfor si = {
 		"1234-4567890-ABCDEFGH",
 		{{true, 1024, 1080, 144}},
 		{
-
-				{ 4,
-					"App 4",
-					true,
-					false,
-					true,
-					false,
-					false},
-				{ 5,
-					"App 5",
-					false,
-					false,
-					false,
-					true,
-					true},
-
+			{ 
+				4,
+				"App 4",
+				true,
+				false,
+				true,
+				false,
+				true
+			}
 		}};
 
-LaunchRequest lreq = { "abcdefgh",
-											 "ri-1234567890",
-											 "app-1",
-											 true};
-
-LaunchResponse lres = { "rtsp://172.24.144.1:48010",
-												"1"};
-
+LaunchRequest lreq = { "abcdefgh", "ri-1234567890", "app-1", true};
+LaunchResponse lres = { "rtsp://172.24.144.1:48010", "1"};
 struct TestResult {
 	std::mutex lock;
 	bool done;
@@ -72,11 +59,11 @@ struct TestResult {
 	}
 };
 
-void on_error(const std::string &error_msg, void *data) {
+void on_error(const char* error_msg, void *data) {
 	struct TestResult *result = (struct TestResult *)data;
 	std::lock_guard<std::mutex> g(result->lock);
 	result->failed = true;
-	result->failed_reason = error_msg;
+	result->failed_reason = std::string(error_msg);
 	result->done = true;
 }
 
@@ -98,7 +85,11 @@ void client_on_start(void *data) {
 }
 
 void server_on_server_infor(ServerInfor *r, void *data) {
-	// ignore
+	struct TestResult *result = (struct TestResult *)data;
+	std::lock_guard<std::mutex> g(result->lock);
+	result->failed = true;
+	result->failed_reason = "Server should not receive SERVERINFOR";
+	result->done = true;
 }
 
 void client_on_server_infor(ServerInfor *r, void *data) {
@@ -107,7 +98,7 @@ void client_on_server_infor(ServerInfor *r, void *data) {
 
 	struct TestResult *result = (struct TestResult *)data;
 	std::lock_guard<std::mutex> g(result->lock);
-	if (false) { // compare
+	if (!compare_server_infor(&sent_json,&recv_json)) { // compare
 	  result->failed = true;
 	  result->failed_reason = "[SERVERINFOR]: request and response mismatch";
 	  result->done = true;
@@ -123,9 +114,9 @@ void server_on_launch_request(LaunchRequest *r, void *data) {
 
 	struct TestResult *result = (struct TestResult *)data;
 	std::lock_guard<std::mutex> g(result->lock);
-	if (false) { // compare
+	if (!compare_launch_request(&sent_json,&recv_json)) { // compare
 	  result->failed = true;
-	  result->failed_reason = "[SELECTION]: request and response mismatch";
+	  result->failed_reason = "[REQUEST]: request mismatch";
 	  result->done = true;
 	} else {
 	  // Send RESPONSE (LAUNCHRESPONSE)
@@ -134,11 +125,19 @@ void server_on_launch_request(LaunchRequest *r, void *data) {
 }
 
 void client_on_launch_request(LaunchRequest *r, void *data) {
-	// ignore
+	struct TestResult *result = (struct TestResult *)data;
+	std::lock_guard<std::mutex> g(result->lock);
+	result->failed = true;
+	result->failed_reason = "Client should not receive REQUEST";
+	result->done = true;
 }
 
 void server_on_launch_response(LaunchResponse *r, void *data) {
-	// ignore
+	struct TestResult *result = (struct TestResult *)data;
+	std::lock_guard<std::mutex> g(result->lock);
+	result->failed = true;
+	result->failed_reason = "Server should not receive RESPONSE";
+	result->done = true;
 }
 
 void client_on_launch_response(LaunchResponse *r, void *data) {
@@ -147,7 +146,7 @@ void client_on_launch_response(LaunchResponse *r, void *data) {
 	LaunchResponse recv_json = *r;
 
 	std::lock_guard<std::mutex> g(result->lock);
-	if (false) {
+	if (!compare_launch_response(&sent_json,&recv_json)) { // compare
 	  result->failed = true;
 	  result->failed_reason = "[RESPONSE]: request and response mismatch";
 	  result->done = true;

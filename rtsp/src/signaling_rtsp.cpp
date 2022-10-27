@@ -27,7 +27,7 @@
 #include <grpcpp/grpcpp.h>
 #include <protobuf.grpc.pb.h>
 
-#include "rtsp_json.h"
+#include "rtsp_packet.h"
 #include "signaling_rtsp.h"
 
 using namespace std::literals;
@@ -132,9 +132,9 @@ SignalingClient *new_signaling_client(GrpcConfig config,
 
 	// Create comm channel
 	auto grpc_target =
-		config.signaling_ip + ":" + std::to_string(config.grpc_port);
+		std::string(config.signaling_ip) + ":" + std::to_string(config.grpc_port);
 	sc->grpc_client = new GRPCClient(
-		grpc::CreateChannel(grpc_target, grpc::InsecureChannelCredentials()));
+		grpc::CreateChannel(std::string(grpc_target), grpc::InsecureChannelCredentials()));
 
 
 
@@ -144,7 +144,7 @@ SignalingClient *new_signaling_client(GrpcConfig config,
 	std::thread recv([config](SignalingClient* signaling) {
 		// Setup authorization
 		ClientContext context;
-		context.AddMetadata("authorization", config.token);
+		context.AddMetadata("authorization", std::string(config.token));
 		signaling->stream = signaling->grpc_client->StreamRequest(context);
 		if (signaling->stream == nullptr) {
 			signaling->on_error("unable to create stream", signaling->data);
@@ -167,7 +167,7 @@ SignalingClient *new_signaling_client(GrpcConfig config,
 			auto err = handle_response(signaling, res);
 		}
 		// Report error and return
-		signaling->on_error(signaling->error_msg, signaling->data);
+		signaling->on_error(signaling->error_msg.c_str(), signaling->data);
 	},sc);
 	recv.detach();
 	return sc;
@@ -244,9 +244,9 @@ static bool RecvServerInfor(SignalingClient *sc, UserResponse &r) {
   }
 
   // do not allow exceptions
-  ServerInfor server_infor;
-  DataField* data = r.mutable_data();
-  serverinfor_from_map(data,&server_infor); 
+  ServerInfor server_infor = {0};
+  DataField data = r.data();
+  serverinfor_from_map(&data,&server_infor); 
   sc->serverinfo_received = true;
   sc->on_serverinfor(&server_infor, sc->data);
   return sc->serverinfo_received;
@@ -274,7 +274,7 @@ static bool RecvLaunchRequest(SignalingClient *sc, UserResponse &r) {
   }
 
   // do not allow exceptions
-  LaunchRequest request;
+  LaunchRequest request = {0};
   launchrequest_from_map(&r.data(),&request);
   sc->selection_received = true;
   sc->on_select(&request, sc->data);
@@ -305,7 +305,7 @@ static bool RecvLaunchResponse(SignalingClient *sc, UserResponse &r) {
   }
 
   // do not allow exceptions
-  LaunchResponse nr;
+  LaunchResponse nr = {0};
 
   launchresponse_from_map(&r.data(),&nr);
   sc->response_received = true;
