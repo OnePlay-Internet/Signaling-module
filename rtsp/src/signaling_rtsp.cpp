@@ -53,7 +53,7 @@ static bool RecvLaunchRequest(SignalingClient *sc, UserResponse &r);
 static bool RecvLaunchResponse(SignalingClient *sc, UserResponse &r);
 
 // gRPC
-typedef std::shared_ptr<ClientReaderWriter<UserRequest, UserResponse>> Stream;
+typedef std::unique_ptr<ClientReaderWriter<UserRequest, UserResponse>> Stream;
 
 class GRPCClient {
 public:
@@ -63,7 +63,7 @@ public:
   // Assembles the client's payload, sends it and presents the response back
   // from the server.
   Stream StreamRequest(ClientContext &context) {
-    Stream stream(stub_->StreamRequest(&context));
+    auto stream = stub_->StreamRequest(&context);
     return stream;
   }
 
@@ -129,7 +129,6 @@ SignalingClient *new_signaling_client(GrpcConfig config,
 	sc->error_msg = "";
 	sc->request_count = 0;
 	sc->connected = false;
-	sc->stream_server = config.stream_server;
 
 	// Create comm channel
 	auto grpc_target =
@@ -137,42 +136,39 @@ SignalingClient *new_signaling_client(GrpcConfig config,
 	sc->grpc_client = new GRPCClient(
 		grpc::CreateChannel(grpc_target, grpc::InsecureChannelCredentials()));
 
-	// Setup authorization
-	ClientContext context;
-	context.AddMetadata("authorization", config.token);
-	auto stream = sc->grpc_client->StreamRequest(context);
-	if (stream == nullptr) {
-		free(sc);
-		return nullptr;
-	}
 
-	// gRPC stream request
-	sc->stream = stream;
 
 	// Start receiving thread
 	// TODO: handshake with timeout/deadline
 	// TODO: handle error
-	std::thread recv([sc]() {
+	std::thread recv([config](SignalingClient* signaling) {
+		// Setup authorization
+		ClientContext context;
+		context.AddMetadata("authorization", config.token);
+		signaling->stream = signaling->grpc_client->StreamRequest(context);
+		if (signaling->stream == nullptr) {
+			signaling->on_error("unable to create stream", signaling->data);
+		}
+
 		for (;;) {
-		// Read response
-		UserResponse res;
-		bool has_output = sc->stream->Read(&res);
+			// Read response
+			UserResponse res;
+			bool has_output = signaling->stream->Read(&res);
 
-		// Handle error
-		if (!has_output) {
-			std::this_thread::sleep_for(10ms);
-			continue;
-		} else if (res.error().length() != 0) {
-			break;
+			// Handle error
+			if (!has_output) {
+				std::this_thread::sleep_for(10ms);
+				continue;
+			} else if (res.error().length() != 0) {
+				break;
+			}
+
+			// Handle response
+			auto err = handle_response(signaling, res);
 		}
-
-		// Handle response
-		auto err = handle_response(sc, res);
-		}
-
 		// Report error and return
-		sc->on_error(sc->error_msg, sc->data);
-	});
+		signaling->on_error(signaling->error_msg, signaling->data);
+	},sc);
 	recv.detach();
 	return sc;
 }
@@ -213,15 +209,17 @@ void CloseSignaling(SignalingClient *sc) {
 
 // from signaling server to stream server
 static bool RecvStart(SignalingClient *sc) {
-  if(sc == nullptr || !sc->stream_server) {
-    sc->error_msg = "RecvStart: invalid state";
-    return false;
-  }
+	if(sc == nullptr) {
+		sc->error_msg = "RecvStart: invalid state";
+		return false;
+	}
 
-  sc->start_received = true;
-  sc->on_start(sc->data);
 
-  return sc->start_received;
+	sc->start_received = true;
+	sc->stream_server = true;
+	sc->on_start(sc->data);
+
+	return sc->start_received;
 }
 
 // from stream server to stream client
@@ -249,8 +247,8 @@ static bool RecvServerInfor(SignalingClient *sc, UserResponse &r) {
   ServerInfor server_infor;
   DataField* data = r.mutable_data();
   serverinfor_from_map(data,&server_infor); 
-  sc->on_serverinfor(&server_infor, sc->data);
   sc->serverinfo_received = true;
+  sc->on_serverinfor(&server_infor, sc->data);
   return sc->serverinfo_received;
 }
 
@@ -262,6 +260,7 @@ bool SendLaunchRequest(SignalingClient *sc, LaunchRequest *a) {
   }
 
   UserRequest r;
+  r.set_target(CMD_LAUNCH_REQUEST);
   launchrequest_to_map(r.mutable_data(),a);
   sc->selection_sent = sc->stream->Write(r);
   return sc->selection_sent;
