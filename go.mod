@@ -3,7 +3,7 @@ module github.com/OnePlay-Internet/signaling-module
 go 1.18
 
 require (
-	github.com/OnePlay-Internet/webrtc-proxy v1.1.0
+	github.com/OnePlay-Internet/webrtc-proxy v1.1.1-0.20221010015807-4def2035a1ff
 	github.com/pion/webrtc/v3 v3.1.47
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
