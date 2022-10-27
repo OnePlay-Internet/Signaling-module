@@ -42,7 +42,7 @@ using signalingGRPC::UserResponse;
 // Handshake commands
 static constexpr auto CMD_START = "START";
 static constexpr auto CMD_SERVERINFOR = "SERVERINFOR";
-static constexpr auto CMD_LAUNCH_REQUEST = "SELECTION";
+static constexpr auto CMD_LAUNCH_REQUEST = "REQUEST";
 static constexpr auto CMD_LAUNCH_RESPONSE = "RESPONSE";
 
 // Fw declaration
@@ -107,74 +107,74 @@ SignalingClient *new_signaling_client(GrpcConfig config,
                                       OnStart on_start_cb,
                                       OnError on_error_cb,
                                       void *data) {
-  SignalingClient *sc = (SignalingClient *)malloc(sizeof(SignalingClient));
-  memset(sc, 0, sizeof(SignalingClient));
+	SignalingClient *sc = (SignalingClient *)malloc(sizeof(SignalingClient));
+	memset(sc, 0, sizeof(SignalingClient));
 
-  // Register callback functions
-  sc->on_serverinfor = on_serverinfor_cb;
-  sc->on_select = on_selection_cb;
-  sc->on_response = on_response_cb;
-  sc->on_start = on_start_cb;
-  sc->on_error = on_error_cb;
-  sc->data = data;
+	// Register callback functions
+	sc->on_serverinfor = on_serverinfor_cb;
+	sc->on_select = on_selection_cb;
+	sc->on_response = on_response_cb;
+	sc->on_start = on_start_cb;
+	sc->on_error = on_error_cb;
+	sc->data = data;
 
-  // Init
-  sc->start_received = false;
-  sc->serverinfo_sent = false;
-  sc->serverinfo_received = false;
-  sc->selection_sent = false;
-  sc->selection_received = false;
-  sc->response_sent = false;
-  sc->response_received = false;
-  sc->error_msg = "";
-  sc->request_count = 0;
-  sc->connected = false;
-  sc->stream_server = config.stream_server;
+	// Init
+	sc->start_received = false;
+	sc->serverinfo_sent = false;
+	sc->serverinfo_received = false;
+	sc->selection_sent = false;
+	sc->selection_received = false;
+	sc->response_sent = false;
+	sc->response_received = false;
+	sc->error_msg = "";
+	sc->request_count = 0;
+	sc->connected = false;
+	sc->stream_server = config.stream_server;
 
-  // Create comm channel
-  auto grpc_target =
-      config.signaling_ip + ":" + std::to_string(config.grpc_port);
-  sc->grpc_client = new GRPCClient(
-      grpc::CreateChannel(grpc_target, grpc::InsecureChannelCredentials()));
+	// Create comm channel
+	auto grpc_target =
+		config.signaling_ip + ":" + std::to_string(config.grpc_port);
+	sc->grpc_client = new GRPCClient(
+		grpc::CreateChannel(grpc_target, grpc::InsecureChannelCredentials()));
 
-  // Setup authorization
-  ClientContext context;
-  context.AddMetadata("authorization", config.token);
-  auto stream = sc->grpc_client->StreamRequest(context);
-  if (stream == nullptr) {
-    free(sc);
-    return nullptr;
-  }
+	// Setup authorization
+	ClientContext context;
+	context.AddMetadata("authorization", config.token);
+	auto stream = sc->grpc_client->StreamRequest(context);
+	if (stream == nullptr) {
+		free(sc);
+		return nullptr;
+	}
 
-  // gRPC stream request
-  sc->stream = stream;
+	// gRPC stream request
+	sc->stream = stream;
 
-  // Start receiving thread
-  // TODO: handshake with timeout/deadline
-  // TODO: handle error
-  std::thread recv([sc]() {
-    for (;;) {
-      // Read response
-      UserResponse res;
-      bool has_output = sc->stream->Read(&res);
+	// Start receiving thread
+	// TODO: handshake with timeout/deadline
+	// TODO: handle error
+	std::thread recv([sc]() {
+		for (;;) {
+		// Read response
+		UserResponse res;
+		bool has_output = sc->stream->Read(&res);
 
-      // Handle error
-      if (!has_output) {
-        std::this_thread::sleep_for(10ms);
-        continue;
-      } else if (res.error().length() != 0) {
-        break;
-      }
+		// Handle error
+		if (!has_output) {
+			std::this_thread::sleep_for(10ms);
+			continue;
+		} else if (res.error().length() != 0) {
+			break;
+		}
 
-      // Handle response
-      auto err = handle_response(sc, res);
-    }
+		// Handle response
+		auto err = handle_response(sc, res);
+		}
 
-    // Report error and return
-    sc->on_error(sc->error_msg, sc->data);
-  });
-
-  return sc;
+		// Report error and return
+		sc->on_error(sc->error_msg, sc->data);
+	});
+	recv.detach();
+	return sc;
 }
 
 static bool handle_response(SignalingClient *sc, UserResponse &r) {
@@ -232,15 +232,8 @@ bool SendServerInfor(SignalingClient *sc, ServerInfor *a) {
   }
 
   UserRequest r;
-  json j = *a;
-
+  serverinfor_to_map(r.mutable_data(),a);
   r.set_target(CMD_SERVERINFOR);
-  if (const auto &[_, err] = r.mutable_data()->emplace("serverinfor", j.dump());
-      err) {
-    sc->error_msg = "SendServerInfor: invalid data";
-    return sc->serverinfo_sent = false;
-  }
-
   sc->serverinfo_sent = sc->stream->Write(r);
   return sc->serverinfo_sent;
 }
@@ -253,16 +246,11 @@ static bool RecvServerInfor(SignalingClient *sc, UserResponse &r) {
   }
 
   // do not allow exceptions
-  auto j = json::parse(r.data().at("serverinfor"), nullptr, false);
-  if (j.is_discarded()) {
-    sc->error_msg = "RecvServerInfor: invalid data";
-    return sc->serverinfo_received = false;
-  }
-  auto nc = j.get<ServerInfor>();
-
+  ServerInfor server_infor;
+  DataField* data = r.mutable_data();
+  serverinfor_from_map(data,&server_infor); 
+  sc->on_serverinfor(&server_infor, sc->data);
   sc->serverinfo_received = true;
-  sc->on_serverinfor(&nc, sc->data);
-
   return sc->serverinfo_received;
 }
 
@@ -274,15 +262,7 @@ bool SendLaunchRequest(SignalingClient *sc, LaunchRequest *a) {
   }
 
   UserRequest r;
-  json j = *a;
-
-  r.set_target(CMD_LAUNCH_REQUEST);
-  if (const auto &[_, err] = r.mutable_data()->emplace("launchrequest", j.dump());
-      err) {
-    sc->error_msg = "SendLaunchRequest: invalid data";
-    return sc->selection_sent = false;
-  }
-
+  launchrequest_to_map(r.mutable_data(),a);
   sc->selection_sent = sc->stream->Write(r);
   return sc->selection_sent;
 }
@@ -295,15 +275,10 @@ static bool RecvLaunchRequest(SignalingClient *sc, UserResponse &r) {
   }
 
   // do not allow exceptions
-  auto j = json::parse(r.data().at("launchrequest"), nullptr, false);
-  if (j.is_discarded()) {
-    sc->error_msg = "RecvLaunchRequest: invalid data";
-    return sc->selection_received = false;
-  }
-  auto ns = j.get<LaunchRequest>();
-
+  LaunchRequest request;
+  launchrequest_from_map(&r.data(),&request);
   sc->selection_received = true;
-  sc->on_select(&ns, sc->data);
+  sc->on_select(&request, sc->data);
 
   return sc->selection_received;
 }
@@ -317,15 +292,8 @@ bool SendLaunchResponse(SignalingClient *sc, LaunchResponse *a) {
   }
 
   UserRequest r;
-  json j = *a;
-
+  launchresponse_to_map(r.mutable_data(),a);
   r.set_target(CMD_LAUNCH_RESPONSE);
-  if (const auto &[_, err] = r.mutable_data()->emplace("launchresponse", j.dump());
-      err) {
-    sc->error_msg = "SendLaunchResponse: invalid data";
-    return sc->response_sent = false;
-  }
-
   sc->response_sent = sc->stream->Write(r);
   return sc->response_sent;
 }
@@ -338,13 +306,9 @@ static bool RecvLaunchResponse(SignalingClient *sc, UserResponse &r) {
   }
 
   // do not allow exceptions
-  auto j = json::parse(r.data().at("launchresponse"), nullptr, false);
-  if (j.is_discarded()) {
-    sc->error_msg = "RecvLaunchResponse: invalid data";
-    return sc->response_received = false;
-  }
-  auto nr = j.get<LaunchResponse>();
+  LaunchResponse nr;
 
+  launchresponse_from_map(&r.data(),&nr);
   sc->response_received = true;
   sc->on_response(&nr, sc->data);
 

@@ -2,4 +2,3 @@ build/
 build-msvc/
 .vscode/
 vcpkg/
-build-msvc/vcpkg_installed/x64-windows/include/google/protobuf/repeated_ptr_field.h

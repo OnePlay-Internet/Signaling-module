@@ -1,26 +1,17 @@
 #pragma once
 
-#include <nlohmann/json.hpp>
 
 #include "signaling_rtsp.h"
+#include <protobuf.grpc.pb.h>
+#include <grpcpp/grpcpp.h>
 
-using json = nlohmann::json;
+typedef google::protobuf::Map<std::string, std::string> DataField;
 
-// json serialize/de-serialize
-void to_json(json &j, const DisplayMode &d);
-void from_json(const json &j, DisplayMode &d);
+void serverinfor_to_map(DataField *j, const ServerInfor  *n);
+void serverinfor_from_map(const DataField *j, ServerInfor  *n);
 
-void to_json(json &j, const Address &a);
-void from_json(const json &j, Address &a);
+void launchrequest_to_map(DataField *j, const LaunchRequest  *n);
+void launchrequest_from_map(const DataField *j, LaunchRequest  *n);
 
-void to_json(json &j, const App &a);
-void from_json(const json &j, App &a);
-
-void to_json(json &j, const ServerInfor &n);
-void from_json(const json &j, ServerInfor &n);
-
-void to_json(json &j, const LaunchRequest &n);
-void from_json(const json &j, LaunchRequest &n);
-
-void to_json(json &j, const LaunchResponse &n);
-void from_json(const json &j, LaunchResponse &n);
+void launchresponse_to_map(DataField *j, const LaunchResponse  *n);
+void launchresponse_from_map(const DataField *j, LaunchResponse  *n);

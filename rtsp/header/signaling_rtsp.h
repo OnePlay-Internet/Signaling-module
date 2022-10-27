@@ -13,7 +13,7 @@
 #include <string>
 
 typedef struct _DisplayMode {
-  bool active;
+  int active;
 
   int width;
   int height;
@@ -29,12 +29,12 @@ typedef struct _App {
   int id = 0;
 
   std::string name;
-  bool hdrSupported;
-  bool isAppCollectorGame;
-  bool hidden;
-  bool directLaunch;
+  int hdrSupported;
+  int isAppCollectorGame;
+  int hidden;
+  int directLaunch;
 
-  bool active;
+  int active;
 } App;
 
 typedef struct _ServerInfor {
@@ -44,7 +44,7 @@ typedef struct _ServerInfor {
 
   int maxLumaPixelsHEVC;         // xml:root.MaxLumaPixelsHEVC | 0
   int serverCodecModeSupport;    // xml:root.ServerCodecModeSupport | 0
-  bool isSupportedServerVersion; // check gfeVersion
+  int isSupportedServerVersion; // check gfeVersion
 
   // Persisted traits
   // Can restore from saved settings
@@ -56,7 +56,7 @@ typedef struct _ServerInfor {
 
   std::string name; // xml:root.hostname | "UNKNOWN"
 
-  bool hasCustomName; // get from saved settings
+  int hasCustomName; // get from saved settings
   std::string uuid;   // xml:root.uniqueid
 
   DisplayMode displayModes[5]; // xml:root.SupportedDisplayMode
@@ -67,7 +67,7 @@ typedef struct _LaunchRequest {
   std::string rikey;
   std::string rikeyid;
   std::string appid;
-  bool localAudioPlayMode;
+  int localAudioPlayMode;
 } LaunchRequest;
 
 typedef struct _LaunchResponse {

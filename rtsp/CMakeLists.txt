@@ -157,10 +157,13 @@ foreach(_target signaling_rtsp)
   target_link_libraries(${_target}
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
-    ${_PROTOBUF_LIBPROTOBUF}
-    nlohmann_json::nlohmann_json)
+    ${_PROTOBUF_LIBPROTOBUF})
 endforeach()
 
 # Test target
-add_executable(signaling_rtsp_test "test/signaling_rtsp_test.cpp")
+add_executable(signaling_rtsp_test 
+  "test/signaling_rtsp_test.cpp"
+  "src/signaling_rtsp.cpp"
+  "src/rtsp_json.cpp"
+)
 target_link_libraries(signaling_rtsp_test signaling_rtsp)
