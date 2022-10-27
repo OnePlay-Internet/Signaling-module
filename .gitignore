@@ -1,2 +1,4 @@
 build/
+build-msvc/
 .vscode/
+vcpkg/

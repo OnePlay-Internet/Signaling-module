@@ -12,8 +12,8 @@ import (
 
 func TestClient(t *testing.T) {
 	conf := config.GrpcConfig{
-		ServerAddress: "54.169.49.176",
-		Port:          30000,
+		ServerAddress: "localhost",
+		Port:          8000,
 	}
 	client, err := InitGRPCClient(&conf,tool.GetDevice())
 	if err != nil {
@@ -29,6 +29,9 @@ func TestClient(t *testing.T) {
 		json, _ := json.Marshal(i)
 		fmt.Printf("%s\n", json)
 		// shutdown_channel<-true;
+	})
+	client.OnDeviceSelect(func (mon tool.Monitor,soundcard tool.Soundcard,num int) error {
+		return nil;
 	})
 	test := "test"
 	var test_num uint16

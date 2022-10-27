@@ -1,0 +1,9 @@
+{
+    "name": "signaling-module",
+    "version-string": "0.0.1",
+    "dependencies": [
+      "grpc",
+      "protobuf",
+      "nlohmann-json"
+    ]
+  }
