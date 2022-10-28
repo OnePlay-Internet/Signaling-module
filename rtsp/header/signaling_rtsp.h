@@ -110,3 +110,5 @@ SignalingClient *new_signaling_client(GrpcConfig config,
                                       OnStart start,
                                       OnError error,
                                       void *data);
+
+#endif

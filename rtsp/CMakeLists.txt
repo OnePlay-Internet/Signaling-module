@@ -154,7 +154,9 @@ include_directories(
 
 # Targets greeter_[async_](client|server)
 foreach(_target signaling_rtsp)
-  add_library(${_target} STATIC "src/${_target}.cpp"
+  add_library(${_target} STATIC 
+    "src/signaling_rtsp.cpp"
+    "src/rtsp_packet.cpp"
     ${hw_proto_srcs}
     ${hw_grpc_srcs})
   target_link_libraries(${_target}
