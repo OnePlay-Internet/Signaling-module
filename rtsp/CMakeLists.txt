@@ -21,10 +21,10 @@ cmake_minimum_required(VERSION 3.5.1)
 set (VCPKG_HOME "/vcpkg") #IMPORTANT: change this to where your vcpkg exists.
 set (CMAKE_TOOLCHAIN_FILE "${VCPKG_HOME}/scripts/buildsystems/vcpkg.cmake")
 set (CMAKE_CXX_STANDARD 17)
-project(HelloWorldMinimal)
+# project(HelloWorldMinimal)
 
 if(NOT MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 else()
   add_definitions(-D_WIN32_WINNT=0x600)
 endif()
@@ -147,7 +147,10 @@ add_custom_command(
 
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-include_directories("./header")
+include_directories(
+  "./header"
+  "./src"
+)
 
 # Targets greeter_[async_](client|server)
 foreach(_target signaling_rtsp)
@@ -159,3 +162,11 @@ foreach(_target signaling_rtsp)
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF})
 endforeach()
+
+# Test target
+add_executable(signaling_rtsp_test 
+  "test/signaling_rtsp_test.cpp"
+  "src/signaling_rtsp.cpp"
+  "src/rtsp_packet.cpp"
+)
+target_link_libraries(signaling_rtsp_test signaling_rtsp)

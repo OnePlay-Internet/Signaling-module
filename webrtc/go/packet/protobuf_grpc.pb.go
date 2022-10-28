@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.1
-// source: protobuf.proto
+// source: protos/protobuf.proto
 
 package packet
 
@@ -34,7 +34,7 @@ func NewStreamServiceClient(cc grpc.ClientConnInterface) StreamServiceClient {
 }
 
 func (c *streamServiceClient) StreamRequest(ctx context.Context, opts ...grpc.CallOption) (StreamService_StreamRequestClient, error) {
-	stream, err := c.cc.NewStream(ctx, &StreamService_ServiceDesc.Streams[0], "/protobuf.StreamService/StreamRequest", opts...)
+	stream, err := c.cc.NewStream(ctx, &StreamService_ServiceDesc.Streams[0], "/signalingGRPC.StreamService/StreamRequest", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (x *streamServiceStreamRequestServer) Recv() (*UserRequest, error) {
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var StreamService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "protobuf.StreamService",
+	ServiceName: "signalingGRPC.StreamService",
 	HandlerType: (*StreamServiceServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
@@ -133,5 +133,5 @@ var StreamService_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
-	Metadata: "protobuf.proto",
+	Metadata: "protos/protobuf.proto",
 }
