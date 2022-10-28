@@ -8,6 +8,8 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#ifndef __SIGNALING_RTSP_H__
+#define __SIGNALING_RTSP_H__
 #include <string>
 
 typedef struct _DisplayMode
@@ -106,3 +108,5 @@ SignalingClient*   new_signaling_client         (GrpcConfig config,
                                                  OnLaunchResponse response,
                                                  OnStart start,
                                                  void *data);
+
+#endif
