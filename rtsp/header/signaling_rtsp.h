@@ -20,23 +20,6 @@ typedef struct _DisplayMode {
 	int refreshRate;
 } DisplayMode;
 
-typedef struct _Address {
-	char  m_Address[50];
-	uint16_t m_Port;
-} Address;
-
-typedef struct _App {
-	int id = 0;
-
-	char  name[50];
-	int hdrSupported;
-	int isAppCollectorGame;
-	int hidden;
-	int directLaunch;
-
-	int active;
-} App;
-
 typedef struct _ServerInfor {
 	char  gfeVersion[50]; // xml:root.GfeVersion
 	char  appVersion[50]; // xml:root.appversion
@@ -44,23 +27,10 @@ typedef struct _ServerInfor {
 
 	int maxLumaPixelsHEVC;         // xml:root.MaxLumaPixelsHEVC | 0
 	int serverCodecModeSupport;    // xml:root.ServerCodecModeSupport | 0
-	int isSupportedServerVersion; // check gfeVersion
 
-	// Persisted traits
-	// Can restore from saved settings
-	Address localAddress;   // xml:root.LocalIP + request HTTP port
-	Address remoteAddress;  // xml:root.ExternalIP + externalPort
-	Address ipv6Address;    // get from saved settings
-	Address manualAddress;  // get from saved settings
-	char  macAddress[50]; // xml:root.mac
-
-	char  name[50]; // xml:root.hostname | "UNKNOWN"
-
-	int hasCustomName; // get from saved settings
-	char  uuid[50];   // xml:root.uniqueid
+	char Ip[50];
 
 	DisplayMode displayModes[5]; // xml:root.SupportedDisplayMode
-	App appList[5];              // polling /applist from server
 } ServerInfor;
 
 bool compare_server_infor	(ServerInfor* a, ServerInfor* b);
