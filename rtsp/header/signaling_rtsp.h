@@ -97,10 +97,9 @@ void WaitForConnected(SignalingClient *sc);
 void CloseSignaling(SignalingClient *sc);
 
 typedef struct _GrpcConfig {
-	char  token[300];
-	char  signaling_ip[50];
-	int grpc_port;
-	bool stream_server;
+	char  	token[300];
+	char  	signaling_ip[50];
+	int 	grpc_port;
 } GrpcConfig;
 
 SignalingClient *new_signaling_client(GrpcConfig config,

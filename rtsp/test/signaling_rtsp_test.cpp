@@ -163,8 +163,7 @@ int main(int argc, char **argv) {
 			"OjE2NjY2MTYzNzAsImV4cCI6MTY2Njg3NTU3MCwiaWF0IjoxNjY2NjE2MzcwfQ."
 			"QqCLRKwhG4N18t1O-gn9ZuVnFFRyIqGhSsT4188l4hM",
 			"localhost",
-			8000,
-			false};
+			8000};
 
 	GrpcConfig server_config = {
 			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
@@ -172,8 +171,7 @@ int main(int argc, char **argv) {
 			"NjY2MTYzNzAsImV4cCI6MTY2Njg3NTU3MCwiaWF0IjoxNjY2NjE2MzcwfQ."
 			"D6dC7Sp5DUIDZk7cuS0wZ8MHxssuotG-eSUuBLbiNKY",
 			"localhost",
-			8000,
-			true};
+			8000};
 
 	struct TestResult result;
 	result.client = new_signaling_client(client_config,

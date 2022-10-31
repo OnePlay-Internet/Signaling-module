@@ -129,6 +129,7 @@ SignalingClient *new_signaling_client(GrpcConfig config,
 	sc->error_msg = "";
 	sc->request_count = 0;
 	sc->connected = false;
+  sc->stream_server = false;
 
 	// Create comm channel
 	auto grpc_target =
