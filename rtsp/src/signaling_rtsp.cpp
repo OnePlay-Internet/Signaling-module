@@ -126,7 +126,7 @@ SignalingClient *new_signaling_client(GrpcConfig config,
 	sc->selection_received = false;
 	sc->response_sent = false;
 	sc->response_received = false;
-	sc->error_msg = "";
+	sc->error_msg = "none";
 	sc->request_count = 0;
 	sc->connected = false;
   sc->stream_server = false;
