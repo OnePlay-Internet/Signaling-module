@@ -12,7 +12,6 @@ using namespace std::literals;
 ServerInfor si = {
 	"1.0",
 	"2.0",
-	"Nvidia Test",
 	0,
 	1,
 	"192.168.1.1",

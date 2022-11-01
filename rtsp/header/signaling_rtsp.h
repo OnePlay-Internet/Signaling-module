@@ -23,7 +23,6 @@ typedef struct _DisplayMode {
 typedef struct _ServerInfor {
 	char  gfeVersion[50]; // xml:root.GfeVersion
 	char  appVersion[50]; // xml:root.appversion
-	char  gpuModel[50];   // xml:root.gputype
 
 	int maxLumaPixelsHEVC;         // xml:root.MaxLumaPixelsHEVC | 0
 	int serverCodecModeSupport;    // xml:root.ServerCodecModeSupport | 0

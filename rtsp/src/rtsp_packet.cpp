@@ -24,17 +24,12 @@ void serverinfor_to_map(DataField *j, const ServerInfor *n) {
 
   	(*j)["gfeVersion"] =  n->gfeVersion;
     (*j)["appVersion"] =  n->appVersion;
-    (*j)["gpuModel"] =  n->gpuModel;
-
-
-
 }
 
 void serverinfor_from_map(const DataField *j, ServerInfor *n) {
 	memset(n,0,sizeof(ServerInfor));
 	to_c_string(j->at("gfeVersion"),n->gfeVersion);
 	to_c_string(j->at("appVersion"),n->appVersion);
-	to_c_string(j->at("gpuModel"),n->gpuModel);
 	to_c_string(j->at("IpAddress"),n->Ip);
 
 	n->maxLumaPixelsHEVC = atoi(j->at("maxLumaPixelsHEVC").c_str());
