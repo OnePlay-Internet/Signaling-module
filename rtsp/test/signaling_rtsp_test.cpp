@@ -10,32 +10,14 @@
 using namespace std::literals;
 
 ServerInfor si = {
-		"1.0",
-		"2.0",
-		"Nvidia Test",
-		0,
-		1,
-		true,
-		Address{ "127.0.0.1", 1234},
-		Address{ "127.0.0.1", 1234},
-		Address{ "127.0.0.1", 1234},
-		Address{ "127.0.0.1", 1234},
-		"AB:CD:EF:12:34:56",
-		"Stream Server",
-		false,
-		"1234-4567890-ABCDEFGH",
-		{{true, 1024, 1080, 144}},
-		{
-			{ 
-				4,
-				"App 4",
-				true,
-				false,
-				true,
-				false,
-				true
-			}
-		}};
+	"1.0",
+	"2.0",
+	"Nvidia Test",
+	0,
+	1,
+	"192.168.1.1",
+	{{true, 1024, 1080, 144}},
+};
 
 LaunchRequest lreq = { "abcdefgh", "ri-1234567890", "app-1", true};
 LaunchResponse lres = { "rtsp://172.24.144.1:48010", "1"};
